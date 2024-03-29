@@ -18,6 +18,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include "sdb.h"
+#include "memory/vaddr.h"
 
 static int is_batch_mode = false;
 
@@ -60,17 +61,20 @@ static int cmd_si(char *args);
 
 static int cmd_info(char *args);
 
+static int cmd_x(char *args);
+
 static struct {
     const char *name;
     const char *description;
 
     int (*handler)(char *);
 } cmd_table[] = {
-        {"help", "Display information about all supported commands", cmd_help},
-        {"c",    "Continue the execution of the program",            cmd_c},
-        {"q",    "Exit NEMU",                                        cmd_q},
-        {"si",   "Execute N instructions, the default is 1",         cmd_si},
-        {"info", "Display the info of registers & watchpoints",      cmd_info},
+        {"help", "Display information about all supported commands",      cmd_help},
+        {"c",    "Continue the execution of the program",                 cmd_c},
+        {"q",    "Exit NEMU",                                             cmd_q},
+        {"si",   "Execute N instructions, the default is 1",              cmd_si},
+        {"info", "Display the info of registers & watchpoints",           cmd_info},
+        {"x",    "Usage: x N EXPR. Scan the memory from EXPR by N bytes", cmd_x},
 
 
 
@@ -119,7 +123,6 @@ static int cmd_info(char *args) {
     return 0;
 }
 
-
 static int cmd_si(char *args) {
     /* extract the first argument */
     char *arg = strtok(args, " ");
@@ -133,6 +136,40 @@ static int cmd_si(char *args) {
     cpu_exec(n);
     return 0;
 }
+
+static int cmd_x(char *args) {
+    char *arg1 = strtok(NULL, " ");
+    if (arg1 == NULL) {
+        printf("Usage: x N EXPR\n");
+        return 0;
+    }
+    char *arg2 = strtok(NULL, " ");
+    if (arg2 == NULL) {
+        printf("Usage: x N EXPR\n");
+        return 0;
+    }
+
+    int n = strtol(arg1, NULL, 10);
+    vaddr_t expr = strtol(arg2, NULL, 16);
+
+    int i, j;
+    for (i = 0; i < n;) {
+        printf(ANSI_FMT("%#010x: ", ANSI_FG_CYAN), expr);
+        printf("| ");
+        for (j = 0; i < n && j < 4; i++, j++) {
+            word_t w = vaddr_read(expr, 4);
+            expr += 4;
+            for (int k = 3; k >= 0; --k) {
+                printf("%02x ", (w >> (k * 8)) & 0xff);
+            }
+            printf("| ");
+        }
+        printf("\n");
+        puts("");
+    }
+    return 0;
+}
+
 
 void sdb_set_batch_mode() {
     is_batch_mode = true;
