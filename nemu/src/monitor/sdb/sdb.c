@@ -63,18 +63,22 @@ static int cmd_info(char *args);
 
 static int cmd_x(char *args);
 
+static int cmd_p(char *args);
+
 static struct {
     const char *name;
     const char *description;
 
     int (*handler)(char *);
 } cmd_table[] = {
-        {"help", "Display information about all supported commands",      cmd_help},
-        {"c",    "Continue the execution of the program",                 cmd_c},
-        {"q",    "Exit NEMU",                                             cmd_q},
-        {"si",   "Execute N instructions, the default is 1",              cmd_si},
-        {"info", "Display the info of registers & watchpoints",           cmd_info},
-        {"x",    "Usage: x N EXPR. Scan the memory from EXPR by N bytes", cmd_x},
+        {"help", "Display information about all supported commands",         cmd_help},
+        {"c",    "Continue the execution of the program",                    cmd_c},
+        {"q",    "Exit NEMU",                                                cmd_q},
+        {"si",   "Execute N instructions, the default is 1",                 cmd_si},
+        {"info", "Display the info of registers & watchpoints",              cmd_info},
+        {"x",    "Usage: x N EXPR. Scan the memory from EXPR by N bytes",    cmd_x},
+        {"p",    "Usage: p EXPR. Calculate the expression, e.g. p $eax + 1", cmd_p}
+
 
 
 
@@ -166,6 +170,17 @@ static int cmd_x(char *args) {
         }
         printf("\n");
         puts("");
+    }
+    return 0;
+}
+
+static int cmd_p(char *args) {
+    bool success;
+    word_t res = expr(args, &success);
+    if (!success) {
+        puts("invalid expression");
+    } else {
+        printf("%u\n", res);
     }
     return 0;
 }
