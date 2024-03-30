@@ -24,13 +24,13 @@
 #include <string.h>
 
 enum {
-    TK_NOTYPE = 64,
+    TK_NOTYPE = 65,
     TK_EQ,
     NUM,
     HEX,
     TK_UEQ,
     REG,
-    DEREF,
+    DEREF, // 解引用
     MINUS  // 取负
 };
 
@@ -83,7 +83,7 @@ typedef struct token {
 static Token tokens[2048] __attribute__((used)) = {};
 static int nr_token __attribute__((used)) = 0;
 
-int prio(char type);
+int prio(int type);
 
 static bool make_token(const char *e) {
     int position = 0;
@@ -96,7 +96,7 @@ static bool make_token(const char *e) {
         /* Try all rules one by one. */
         for (i = 0; i < NR_REGEX; i++) {
             if (regexec(&re[i], e + position, 1, &pmatch, 0) == 0 && pmatch.rm_so == 0) {
-                const char *substr_start = e + position;
+                // const char *substr_start = e + position;
                 int substr_len = pmatch.rm_eo;
 
                 if (substr_len > 32) {
@@ -142,6 +142,7 @@ static bool make_token(const char *e) {
                     case HEX:
                     case REG:
                         memcpy(tokens[nr_token].str, e + position - substr_len, (substr_len) * sizeof(char));
+                        Assert(substr_len < 32, "substr_len >= 32");
                         tokens[nr_token].str[substr_len] = '\0';
                         // IFDEF(CONFIG_DEBUG, Log("[DEBUG ]读入了一个数字%s", tokens[nr_token].str));
                     default:
@@ -212,7 +213,7 @@ bool check_parentheses(int p, int q, int *position) {
 
 #define PRIOROTY_BASE 16
 
-int prio(char type) {
+int prio(int type) {
     switch (type) {
         case '|':
             return PRIOROTY_BASE + 0;

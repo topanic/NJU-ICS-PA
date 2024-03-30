@@ -256,14 +256,14 @@ void test_expr() {
     fclose(fp);
     if (e) free(e);
 
-    Log("expr test pass");
+    Log("Expr test pass!");
 }
 
 void init_sdb() {
     /* Compile the regular expressions. */
     init_regex();
 
-    /* test math expression calculation */
+    /* test math expression calculation. */
     test_expr();
 
     /* Initialize the watchpoint pool. */
