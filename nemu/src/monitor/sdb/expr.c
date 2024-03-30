@@ -14,53 +14,44 @@
 ***************************************************************************************/
 
 #include <isa.h>
+#include <memory/paddr.h>
 
 /* We use the POSIX regex functions to process regular expressions.
  * Type 'man regex' for more information about POSIX regex functions.
  */
 #include <regex.h>
+#include <stdio.h>
+#include <string.h>
 
 enum {
-    TK_NOTYPE = 256,
+    TK_NOTYPE = 64,
     TK_EQ,
-    TK_NUM,
-    TK_PLUS,
-    TK_MINUS,
-    TK_MUL,
-    TK_DIV,
-    TK_L,
-    TK_R,
+    NUM,
+    HEX,
+    TK_UEQ,
+    REG,
     DEREF,
-    TK_AND,
-    TK_UNEQ,
-    TK_HEX,
-    TK_REG,
-
-    /* TODO: Add more token types */
-
+    MINUS  // 取负
 };
 
 static struct rule {
     const char *regex;
     int token_type;
-} rules[] = {
-
-        /* TODO: Add more rules.
-         * Pay attention to the precedence level of different rules.
-         */
-
-        {" +",     TK_NOTYPE}, // spaces
-        {"\\+",    TK_PLUS},  // plus
-        {"==",     TK_EQ},     // equal
-        {"\\-",    TK_MINUS},
-        {"\\*",    TK_MUL},
-        {"\\/",    TK_DIV},
-        {"[0-9]+", TK_NUM},
-        {"\\(",    TK_L},
-        {"\\)",    TK_R},
-        {"&&",     TK_AND},
-        {"!=",     TK_UNEQ},
-
+} rules[] = {//这里面不要有字符的type，因为标识从A开始
+        {"0x[0-9A-Fa-f]+", HEX}, //16进制数字
+        {"\\$[0-9a-z]+",   REG},//寄存器
+        {"[0-9]+",         NUM},       // 数字
+        {"\\(",            '('},         // 左括号
+        {"\\)",            ')'},         // 右括号
+        {"\\+",            '+'},         // plus
+        {"\\-",            '-'},         // sub
+        {"\\*",            '*'},         // mul
+        {"\\/",            '/'},         // divide
+        {" +",             TK_NOTYPE},    // spaces
+        {"==",             TK_EQ},        // equal
+        {"!=",             TK_UEQ},
+        {"&&",             '&'},
+        {"\\|\\|",         '|'}
 };
 
 #define NR_REGEX ARRLEN(rules)
