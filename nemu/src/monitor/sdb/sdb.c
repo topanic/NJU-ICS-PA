@@ -178,7 +178,7 @@ static int cmd_p(char *args) {
     bool success;
     word_t res = expr(args, &success);
     if (!success) {
-        puts("invalid expression");
+        puts("cmd_p: invalid expression");
     } else {
         printf("%u\n", res);
     }
@@ -228,9 +228,43 @@ void sdb_mainloop() {
     }
 }
 
+void test_expr() {
+    FILE *fp = fopen("/home/czy/course/NJU-ICS-PA/nemu/tools/gen-expr/input", "r");
+    if (fp == NULL) perror("test_expr error");
+
+    char *e = NULL;
+    word_t correct_res;
+    size_t len = 0;
+    ssize_t read;
+    bool success = false;
+
+    while (true) {
+        if (fscanf(fp, "%u ", &correct_res) == -1) break;
+        read = getline(&e, &len, fp);
+        e[read - 1] = '\0';
+
+        word_t res = expr(e, &success);
+
+        assert(success);
+        if (res != correct_res) {
+            puts(e);
+            printf("expected: %u, got: %u\n", correct_res, res);
+            assert(0);
+        }
+    }
+
+    fclose(fp);
+    if (e) free(e);
+
+    Log("expr test pass");
+}
+
 void init_sdb() {
     /* Compile the regular expressions. */
     init_regex();
+
+    /* test math expression calculation */
+    test_expr();
 
     /* Initialize the watchpoint pool. */
     init_wp_pool();
