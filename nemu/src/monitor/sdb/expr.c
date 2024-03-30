@@ -83,7 +83,9 @@ typedef struct token {
 static Token tokens[2048] __attribute__((used)) = {};
 static int nr_token __attribute__((used)) = 0;
 
-static bool make_token(char *e) {
+int prio(char type);
+
+static bool make_token(const char *e) {
     int position = 0;
     int i;
     regmatch_t pmatch;
@@ -94,11 +96,15 @@ static bool make_token(char *e) {
         /* Try all rules one by one. */
         for (i = 0; i < NR_REGEX; i++) {
             if (regexec(&re[i], e + position, 1, &pmatch, 0) == 0 && pmatch.rm_so == 0) {
-                char *substr_start = e + position;
+                const char *substr_start = e + position;
                 int substr_len = pmatch.rm_eo;
 
-                Log("match rules[%d] = \"%s\" at position %d with len %d: %.*s",
-                    i, rules[i].regex, position, substr_len, substr_len, substr_start);
+                if (substr_len > 32) {
+                    assert(0);
+                }
+
+//                Log("match rules[%d] = \"%s\" at position %d with len %d: %.*s",
+//                    i, rules[i].regex, position, substr_len, substr_len, substr_start);
 
                 position += substr_len;
 
@@ -151,6 +157,7 @@ static bool make_token(char *e) {
     return true;
 }
 
+word_t eval(int p, int q, bool *success, int *position);
 
 word_t expr(char *e, bool *success) {
     if (!make_token(e)) {
@@ -162,4 +169,129 @@ word_t expr(char *e, bool *success) {
     TODO();
 
     return 0;
+int prio(char type) {
+    switch (type) {
+        case '|':
+            return PRIOROTY_BASE + 0;
+        case '&':
+            return PRIOROTY_BASE + 1;
+        case TK_EQ:
+        case TK_UEQ:
+            return PRIOROTY_BASE + 2;
+        case '+':
+        case '-':
+            return PRIOROTY_BASE + 3;
+        case '*':
+        case '/':
+            return PRIOROTY_BASE + 4;
+        default:
+            return -1;
+    }
+}
+
+u_int32_t eval(int p, int q, bool *success, int *position) {
+    if (p > q) {
+        *success = false;
+        return 0;
+    } else if (p == q) {
+        /* Single token.
+         * For now this token should be a number.
+         * Return the value of the number.
+         */
+        u_int32_t buffer = 0;
+        switch (tokens[p].type) {
+            case HEX:
+//                sscanf(tokens[p].str, "%x", &buffer);
+                buffer = strtol(tokens[p].str, NULL, 16);
+                break;
+
+            case NUM:
+//                sscanf(tokens[p].str, "%u", &buffer);
+                buffer = strtol(tokens[p].str, NULL, 10);
+                break;
+
+            case REG:
+                if (strcmp(tokens[p].str, "$pc") == 0) {
+                    buffer = cpu.pc;
+                    *success = true;
+                } else {
+                    buffer = isa_reg_str2val(tokens[p].str, success);
+                }
+
+                if (!*success) {
+                    *position = p;
+                    return 0;
+                }
+                break;
+
+            default:
+                assert(0);
+        }
+        // IFDEF(CONFIG_DEBUG, Log("读取数据 %d %s %x", buffer, tokens[p].str, tokens[p].type));
+        return buffer;
+    } else if (q - p == 1 || check_parentheses(p + 1, q, position) == true) {//长度为2的子表达式呈型于 -[NUM] *[NUM]
+        switch (tokens[p].type) {
+            case DEREF:
+                return *((uint32_t *) guest_to_host(eval(p + 1, q, success, position)));
+                break;
+
+            case MINUS://取负
+                return -eval(p + 1, q, success, position);
+            default:
+                assert(0);
+        }
+    } else if (check_parentheses(p, q, position) == true) {
+        /* The expression is surrounded by a matched pair of parentheses.
+         * If that is the case, just throw away the parentheses.
+         */
+        // IFDEF(CONFIG_DEBUG, Log("解括号"));
+        return eval(p + 1, q - 1, success, position);
+    } else {
+        // IFDEF(CONFIG_DEBUG, Log("计算"));
+        if (*position != -1) {
+            *success = false;
+            return 0;
+        }
+        int op = -1, level = -1;
+        for (int i = p; i <= q; ++i) {
+            if (tokens[i].type == '(') {
+                level++;
+            } else if (tokens[i].type == ')') {
+                level--;// 不再检查合法性，一定合法
+            } else if (level == -1 && prio(tokens[i].type) >= 0) {//说明层次不在括号里且是运算符
+                if (op == -1 || prio(tokens[i].type) <= prio(tokens[op].type)) {// 寻找主运算符
+                    op = i;
+                }
+            }
+        }
+        if (op == -1) {
+            *success = false;
+            *position = 0;
+            return 0;
+        }
+
+        // IFDEF(CONFIG_DEBUG, Log("主运算符 %c", tokens[op].type));
+        u_int32_t val1 = eval(p, op - 1, success, position);
+        u_int32_t val2 = eval(op + 1, q, success, position);
+        switch (tokens[op].type) {
+            case '+':
+                return val1 + val2;
+            case '-':
+                return val1 - val2;
+            case '*':
+                return val1 * val2;
+            case '/':
+                return val1 / val2;
+            case TK_EQ:
+                return val1 == val2;
+            case TK_UEQ:
+                return val1 != val2;
+            case '|':
+                return val1 || val2;
+            case '&':
+                return val1 && val2;
+            default:
+                assert(0);
+        }
+    }
 }
