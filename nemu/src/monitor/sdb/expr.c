@@ -114,36 +114,42 @@ static bool make_token(const char *e) {
                  */
 
                 switch (rules[i].token_type) {
+                    case '*':
+                    case '-':
+                        if (nr_token == 0 || tokens[nr_token - 1].type == '(' || prio(tokens[nr_token - 1].type) > 0) {
+                            switch (rules[i].token_type) {
+                                case '*':
+                                    tokens[nr_token].type = DEREF;
+                                    break;
+                                case '-':
+                                    tokens[nr_token].type = MINUS;
+                                    break;
+                            }
+                        } else if (tokens[nr_token - 1].type == ')'
+                                   || tokens[nr_token - 1].type == NUM || tokens[nr_token - 1].type == HEX
+                                   || tokens[nr_token - 1].type == REG) {
+                            tokens[nr_token].type = rules[i].token_type;
+                        } else {
+                            IFDEF(CONFIG_DEBUG, Log("遇到了%#x作为前缀", tokens[i - 1].type));
+                            assert(0);
+                        }
+                        nr_token++;
+                        break;
+
                     case TK_NOTYPE:
                         break;
-                    case TK_NUM:
-                        for (int j = 0; j < substr_len; j++) {
-                            tokens[nr_token].str[j] = *(substr_start + j);
-                        }
-                        tokens[nr_token].type = TK_NUM;
-                        nr_token++;
-                        break;
-                    case TK_EQ:
-                    case TK_UNEQ:
-                    case TK_AND:
-                        tokens[nr_token].str[0] = *(substr_start);
-                        tokens[nr_token].str[1] = *(substr_start + 1);
-                        tokens[nr_token].type = rules[i].token_type;
-                        nr_token++;
-                        break;
-                    case TK_PLUS:
-                    case TK_MINUS:
-                    case TK_MUL:
-                    case TK_DIV:
-                    case TK_R:
-                    case TK_L:
-                        tokens[nr_token].str[0] = *(substr_start);
-                        tokens[nr_token].type = rules[i].token_type;
-                        nr_token++;
-                        break;
+                    case NUM:
+                    case HEX:
+                    case REG:
+                        memcpy(tokens[nr_token].str, e + position - substr_len, (substr_len) * sizeof(char));
+                        tokens[nr_token].str[substr_len] = '\0';
+                        // IFDEF(CONFIG_DEBUG, Log("[DEBUG ]读入了一个数字%s", tokens[nr_token].str));
                     default:
+                        tokens[nr_token].type = rules[i].token_type;
+                        nr_token++;
                         break;
                 }
+
                 break;
             }
         }
@@ -168,7 +174,6 @@ word_t expr(char *e, bool *success) {
     /* TODO: Insert codes to evaluate the expression. */
     TODO();
 
-    return 0;
 int prio(char type) {
     switch (type) {
         case '|':
