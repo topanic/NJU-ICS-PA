@@ -22,6 +22,8 @@ typedef struct watchpoint {
     struct watchpoint *next;
 
     /* TODO: Add more members if necessary */
+    char *expr;
+    word_t old;
 
 } WP;
 
@@ -40,4 +42,79 @@ void init_wp_pool() {
 }
 
 /* TODO: Implement the functionality of watchpoint */
+
+/* get a wp from "free_" list */
+WP *new_wp() {
+    Assert(free_, "free_ list not exist");
+    // get a free wp from "free_" list, add it to the "head" list.
+    WP *ret = free_;
+    free_ = free_->next;
+    ret->next = head;
+    head = ret;
+    return ret;
+}
+
+/* free a wp */
+void free_wp(WP *wp) {
+    WP *h = head;
+    if (h == wp) {
+        head = NULL;
+    } else {
+        while (h && h->next != wp) h = h->next;
+        Assert(h, "head not exist");
+        // remove this wp from "head" list
+        h->next = wp->next;
+    }
+    // add wp into the front of "free_" list
+    wp->next = free_;
+    free_ = wp;
+}
+
+void wp_watch(char *expr, word_t res) {
+    WP *wp = new_wp();
+    wp->expr = (char *) malloc(strlen(expr) + 1);
+    strcpy(wp->expr, expr);
+    wp->old = res;
+    printf("Watchpoint %d: %s\n", wp->NO, expr);
+}
+
+void wp_remove(int no) {
+    assert(no < NR_WP);
+    WP *wp = &wp_pool[no];
+    free_wp(wp);
+    printf("Delete watchpoint %d: %s\n", wp->NO, wp->expr);
+}
+
+void wp_iterate() {
+    WP *h = head;
+    if (!h) {
+        puts("No watchpoints.");
+        return;
+    }
+    printf("%-8s%-8s\n", "Num", "What");
+    while (h) {
+        printf("%-8d%-8s\n", h->NO, h->expr);
+        h = h->next;
+    }
+}
+
+void wp_difftest() {
+    WP *h = head;
+    bool if_changed = false;
+    while (h) {
+        bool _;
+        word_t new = expr(h->expr, &_);
+        if (h->old != new) {
+            printf("Watchpoint %d: %s\n"
+                   "Old value = 0x%08x\n"
+                   "New value = 0x%08x\n", h->NO, h->expr, h->old, new);
+            h->old = new;
+            if_changed = true;
+        }
+        h = h->next;
+    }
+    if (if_changed) {
+        nemu_state.state = NEMU_STOP;
+    }
+}
 
