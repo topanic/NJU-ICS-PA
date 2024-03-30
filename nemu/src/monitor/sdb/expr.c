@@ -21,7 +21,20 @@
 #include <regex.h>
 
 enum {
-    TK_NOTYPE = 256, TK_EQ,
+    TK_NOTYPE = 256,
+    TK_EQ,
+    TK_NUM,
+    TK_PLUS,
+    TK_MINUS,
+    TK_MUL,
+    TK_DIV,
+    TK_L,
+    TK_R,
+    DEREF,
+    TK_AND,
+    TK_UNEQ,
+    TK_HEX,
+    TK_REG,
 
     /* TODO: Add more token types */
 
@@ -36,9 +49,18 @@ static struct rule {
          * Pay attention to the precedence level of different rules.
          */
 
-        {" +",  TK_NOTYPE},    // spaces
-        {"\\+", '+'},         // plus
-        {"==",  TK_EQ},        // equal
+        {" +",     TK_NOTYPE}, // spaces
+        {"\\+",    TK_PLUS},  // plus
+        {"==",     TK_EQ},     // equal
+        {"\\-",    TK_MINUS},
+        {"\\*",    TK_MUL},
+        {"\\/",    TK_DIV},
+        {"[0-9]+", TK_NUM},
+        {"\\(",    TK_L},
+        {"\\)",    TK_R},
+        {"&&",     TK_AND},
+        {"!=",     TK_UNEQ},
+
 };
 
 #define NR_REGEX ARRLEN(rules)
@@ -95,10 +117,36 @@ static bool make_token(char *e) {
                  */
 
                 switch (rules[i].token_type) {
+                    case TK_NOTYPE:
+                        break;
+                    case TK_NUM:
+                        for (int j = 0; j < substr_len; j++) {
+                            tokens[nr_token].str[j] = *(substr_start + j);
+                        }
+                        tokens[nr_token].type = TK_NUM;
+                        nr_token++;
+                        break;
+                    case TK_EQ:
+                    case TK_UNEQ:
+                    case TK_AND:
+                        tokens[nr_token].str[0] = *(substr_start);
+                        tokens[nr_token].str[1] = *(substr_start + 1);
+                        tokens[nr_token].type = rules[i].token_type;
+                        nr_token++;
+                        break;
+                    case TK_PLUS:
+                    case TK_MINUS:
+                    case TK_MUL:
+                    case TK_DIV:
+                    case TK_R:
+                    case TK_L:
+                        tokens[nr_token].str[0] = *(substr_start);
+                        tokens[nr_token].type = rules[i].token_type;
+                        nr_token++;
+                        break;
                     default:
-                        TODO();
+                        break;
                 }
-
                 break;
             }
         }
