@@ -165,14 +165,52 @@ static bool make_token(const char *e) {
 
 word_t eval(int p, int q, bool *success, int *position);
 
-word_t expr(char *e, bool *success) {
+word_t expr(const char *e, bool *success) {
     if (!make_token(e)) {
         *success = false;
         return 0;
     }
 
-    /* TODO: Insert codes to evaluate the expression. */
-    TODO();
+    *success = true;
+    int position = 0;
+    int ans = eval(0, nr_token - 1, success, &position);
+    if (!*success) {
+        printf("some problem happens at position %d\n%s\n%*.s^\n", position, e, position, "");
+    }
+    return ans;
+}
+
+#define STACK_SIZE 1024
+
+bool check_parentheses(int p, int q, int *position) {
+    //char *stack = calloc(STACK_SIZE, sizeof(char));
+    char stack[STACK_SIZE];
+    *position = -1;
+    int top = -1, index = p;
+    bool is_parentheses = tokens[p].type == '(';
+    while (index <= q) {
+        if (tokens[index].type == '(') {
+            stack[++top] = '(';
+        } else if (tokens[index].type == ')') {
+            if (top < 0 || stack[top] != '(') {
+                *position = p;
+                return false;
+            } else {
+                top--;
+            }
+        }
+        if (index < q)
+            is_parentheses = (top >= 0) && is_parentheses; // 永远都该有一个前括号
+        index++;
+    }
+    if (top != -1) { //栈空
+        *position = p;
+        return false;
+    }
+    return is_parentheses;
+}
+
+#define PRIOROTY_BASE 16
 
 int prio(char type) {
     switch (type) {
