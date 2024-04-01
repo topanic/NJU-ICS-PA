@@ -286,11 +286,7 @@ int vsprintf(char *buf, const char *fmt, va_list args) {
 
                 /*如果字符串中字符个数大于精度，len为精度；
                 否则len为字符个数,即精度表示了字符串输出字符的个数*/
-                if (strlen(s) > precision) {
-                    len = precision;
-                } else {
-                    len = strlen(s);
-                }
+                len = strnlen(s, precision);
 
                 //处理'-',即printf("%-s","hello");
                 if (!(flags & LEFT))
