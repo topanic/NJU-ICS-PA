@@ -15,6 +15,7 @@ size_t strlen(const char *s) {
     return n;
 }
 
+/* 统计字符串中字符个数(不包括\0)，如果个数大于count，则返回count，否则返回字符个数 */
 size_t strnlen(const char *s, size_t count) {
     const char *sc;
     for (sc = s; count-- && *sc != '\0'; ++sc)

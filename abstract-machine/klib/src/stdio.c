@@ -54,7 +54,7 @@ uint32_t __attribute__((weak)) __div64_32(uint64_t *n, uint32_t base) {
           (n) = (unsigned int)(n) / __base;            \
       } else                                \
           __rem = __div64_32(&(n), __base);            /*64转32*/ \
-      __rem;                                \
+          __rem;                                \
   })
 
 //以特定的进制格式化输出字符
@@ -152,11 +152,11 @@ static int skip_atoi(const char **s)//二级指针，存进来的是字符串的
     return i;
 }
 
+//设置输出缓冲区，为1024字节大小
 static char sprint_buf[1024];
 
 /*可变函数在内部实现的过程中是从右向左压入堆栈，从而保证了可变参数的第一个参数始终位于栈顶*/
-int printf(const char *fmt, ...)//可以有一个或多个固定参数
-{
+int printf(const char *fmt, ...) { //可以有一个或多个固定参数
     va_list args; //用于存放参数列表的数据结构
     int n;
     /*根据最后一个fmt来初始化参数列表，至于为什么是最后一个参数，是与va_start有关，感兴趣的朋友可以先去了解一下变参函数和里面用到的相关宏的作用。*/
