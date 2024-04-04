@@ -74,4 +74,13 @@ uint64_t get_time();
   } while (0)
 
 
+// ----------- trace -----------
+// ring buffer
+#define MAX_INSTR_RING_BUFFER 20
+extern char ring_buffer[MAX_INSTR_RING_BUFFER][128];
+extern int ring_buffer_index;
+void ring_buffer_display();
+
+
+
 #endif

@@ -37,6 +37,15 @@ extern void wp_difftest();
 static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
 #ifdef CONFIG_ITRACE_COND
     if (ITRACE_COND) { log_write("%s\n", _this->logbuf); }
+
+    // iringbuf
+    if (ring_buffer_index > MAX_INSTR_RING_BUFFER) {
+        ring_buffer_index = -1;
+    }
+    strcpy(ring_buffer[++ring_buffer_index], _this->logbuf);
+
+
+
 #endif
     if (g_print_step) { IFDEF(CONFIG_ITRACE, puts(_this->logbuf)); }
     IFDEF(CONFIG_DIFFTEST, difftest_step(_this->pc, dnpc));
@@ -97,7 +106,10 @@ static void statistic() {
 
 void assert_fail_msg() {
     isa_reg_display();
+    // iringbuf
+    ring_buffer_display();
     statistic();
+
 }
 
 /* Simulate how the CPU works. */
