@@ -17,7 +17,7 @@
 #include <cpu/decode.h>
 #include <cpu/difftest.h>
 #include <locale.h>
-//#include <elf.h>
+
 /* The assembly code of instructions executed is only output to the screen
  * when the number of instructions executed is less than this value.
  * This is useful when you use the `si' command.
@@ -33,19 +33,11 @@ static bool g_print_step = false;
 void device_update();
 
 extern void wp_difftest();
+extern void display_inst();
 
 static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
 #ifdef CONFIG_ITRACE_COND
     if (ITRACE_COND) { log_write("%s\n", _this->logbuf); }
-
-    // iringbuf
-    if (ring_buffer_index > MAX_INSTR_RING_BUFFER) {
-        ring_buffer_index = -1;
-    }
-    strcpy(ring_buffer[++ring_buffer_index], _this->logbuf);
-
-
-
 #endif
     if (g_print_step) { IFDEF(CONFIG_ITRACE, puts(_this->logbuf)); }
     IFDEF(CONFIG_DIFFTEST, difftest_step(_this->pc, dnpc));
@@ -72,9 +64,6 @@ static void exec_once(Decode *s, vaddr_t pc) {
     space_len = space_len * 3 + 1;
     memset(p, ' ', space_len);
     p += space_len;
-
-
-
 
 #ifndef CONFIG_ISA_loongarch32r
     void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte);
@@ -109,10 +98,8 @@ static void statistic() {
 
 void assert_fail_msg() {
     isa_reg_display();
-    // iringbuf
-    ring_buffer_display();
+    IFDEF(CONFIG_IRINGBUF,display_inst());
     statistic();
-
 }
 
 /* Simulate how the CPU works. */
