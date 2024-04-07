@@ -33,6 +33,7 @@ static bool g_print_step = false;
 void device_update();
 
 extern void wp_difftest();
+extern void display_inst();
 
 static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
 #ifdef CONFIG_ITRACE_COND
@@ -97,6 +98,7 @@ static void statistic() {
 
 void assert_fail_msg() {
     isa_reg_display();
+    IFDEF(CONFIG_IRINGBUF,display_inst());
     statistic();
 }
 
