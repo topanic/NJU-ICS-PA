@@ -18,6 +18,10 @@
 #include <cpu/ifetch.h>
 #include <cpu/decode.h>
 
+extern void display_call_func(word_t pc, word_t func_addr);
+extern void display_ret_func(word_t pc);
+
+
 #define R(i) gpr(i)
 #define Mr vaddr_read
 #define Mw vaddr_write
@@ -139,10 +143,24 @@ static int decode_exec(Decode *s) {
         INSTPAT("0000000 ????? ????? 101 ????? 00100 11", srli, I, R(rd) = src1 >> imm);
         INSTPAT("0100000 ????? ????? 101 ????? 00100 11", srai, I,
                 imm = BITS(imm, 4, 0); R(rd) = (SEXT(BITS(src1, 31, 31), 1) << (32 - imm)) | (src1 >> imm));
-//        INSTPAT("??????? ????? ????? 000 ????? 11001 11", jalr, I,
-//                R(rd) = s->pc + 4; s->dnpc = (src1 + imm) & ~1);
+        INSTPAT("??????? ????? ????? 000 ????? 11001 11", jalr, I,
+                R(rd) = s->pc + 4; s->dnpc = (src1 + imm) & ~1;
+                        IFDEF(CONFIG_FTRACE,
+                              if(rd == 1){
+                                  display_call_func(s->pc, s->dnpc);
+                              } else if (rd == 0 && src1 == R(1)) {
+                                  display_ret_func(s->pc);
+                              });
+                        );
         INSTPAT("??????? ????? ????? 000 ????? 11001 11", ret, I,
-                R(rd) = s->pc + 4; s->dnpc = (src1 + imm) & ~1); // jalr(ret)
+                R(rd) = s->pc + 4; s->dnpc = (src1 + imm) & ~1;
+                        IFDEF(CONFIG_FTRACE,
+                              if(rd == 1){
+                                  display_call_func(s->pc, s->dnpc);
+                              } else if (rd == 0 && src1 == R(1)) {
+                                  display_ret_func(s->pc);
+                              });
+                        ); // jalr(ret)
 
         /* S */
         INSTPAT("??????? ????? ????? 000 ????? 01000 11", sb, S, Mw(src1 + imm, 1, src2));
@@ -169,7 +187,11 @@ static int decode_exec(Decode *s) {
 
         /* J */
         // JAL stores the address of the instruction following the jump (pc+4) into register rd.
-        INSTPAT("??????? ????? ????? ??? ????? 11011 11", jal, J, R(rd) = s->pc + 4; s->dnpc += imm - 4;);
+        INSTPAT("??????? ????? ????? ??? ????? 11011 11", jal, J, R(rd) = s->pc + 4; s->dnpc += imm - 4;
+                IFDEF(CONFIG_FTRACE, if (rd == 1) {
+                    display_call_func(s->pc, s->dnpc);
+                });
+        );
 
         /* N */
         INSTPAT("0000000 00001 00000 000 00000 11100 11", ebreak, N, NEMUTRAP(s->pc, R(10))); // R(10) is $a0

@@ -17,7 +17,7 @@
 #include <cpu/decode.h>
 #include <cpu/difftest.h>
 #include <locale.h>
-
+//#include <elf.h>
 /* The assembly code of instructions executed is only output to the screen
  * when the number of instructions executed is less than this value.
  * This is useful when you use the `si' command.
@@ -73,6 +73,9 @@ static void exec_once(Decode *s, vaddr_t pc) {
     memset(p, ' ', space_len);
     p += space_len;
 
+
+
+
 #ifndef CONFIG_ISA_loongarch32r
     void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte);
     disassemble(p, s->logbuf + sizeof(s->logbuf) - p,
@@ -89,7 +92,7 @@ static void execute(uint64_t n) {
         exec_once(&s, cpu.pc);
         g_nr_guest_inst++;
         trace_and_difftest(&s, cpu.pc);
-        if (nemu_state.state != NEMU_RUNNING) break;
+        if (nemu_state.state != NEMU_RUNNING) break;  // stop if get some wrong when it  is executing
         IFDEF(CONFIG_DEVICE, device_update());
     }
 }
