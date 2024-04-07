@@ -32,6 +32,8 @@ void display_inst()
 
     if(iringbuf[i+1].pc == 0) i = 0;
 
+    printf("----------------------------iringbuf----------------------------\n");
+
     do
     {
         p = buf;
@@ -44,6 +46,8 @@ void display_inst()
         puts(buf);
         i = (i + 1) % INST_NUM;
     } while (i != end);
+
+    printf("----------------------------iringbuf----------------------------\n\n");
 
 }
 
