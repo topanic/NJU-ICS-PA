@@ -165,6 +165,13 @@ int printf(const char *fmt, ...) { //可以有一个或多个固定参数
     va_end(args);//执行清理参数列表的工作
     // if (console_ops.write)
     // 		console_ops.write(sprint_buf, n);
+
+    char *temp = sprint_buf;
+    while (*temp != 0) {
+        putch(*temp);
+        temp++;
+    }
+
     return n;
 }
 
