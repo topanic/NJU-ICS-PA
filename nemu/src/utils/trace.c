@@ -1,9 +1,12 @@
+
+
+
 #include <common.h>
 #include <elf.h>
 
-
 #define INST_NUM 16
 
+#ifdef IRINGBUF
 /********************************** iringbuf *********************************************/
 typedef struct
 {
@@ -50,7 +53,10 @@ void display_inst()
     printf("----------------------------iringbuf----------------------------\n\n");
 
 }
+#endif
 
+
+#ifdef FTRACE
 /************************************* ftrace ********************************************/
 
 typedef struct {
@@ -193,3 +199,5 @@ void display_ret_func(word_t pc) {
 
     printf("ret  [%s]\n", symbol[i].name);
 }
+
+#endif
