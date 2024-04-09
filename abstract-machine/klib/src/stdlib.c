@@ -29,7 +29,7 @@ int atoi(const char* nptr) {
   return x;
 }
 
-static uintptr_t addr = 0;  // 上次分配内存的位置
+static uintptr_t addr __attribute__((unused)) = 0;  // 上次分配内存的位置
 
 void *malloc(size_t size) {
   // On native, malloc() will be called during initializaion of C runtime.
