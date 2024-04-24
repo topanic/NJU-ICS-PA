@@ -16,13 +16,19 @@
 #include <isa.h>
 
 word_t isa_raise_intr(word_t NO, vaddr_t epc) {
-  /* TODO: Trigger an interrupt/exception with ``NO''.
-   * Then return the address of the interrupt/exception vector.
-   */
+    /* TODO: Trigger an interrupt/exception with ``NO''.
+     * Then return the address of the interrupt/exception vector.
+     */
+    if (NO == 0) {
+        // "NO" equal 0, means trap
+        epc += 4;
+    }
+    cpu.csr.mcause = NO;
+    cpu.csr.mepc = epc;
 
-  return 0;
+    return cpu.csr.mtvec;
 }
 
 word_t isa_query_intr() {
-  return INTR_EMPTY;
+    return INTR_EMPTY;
 }
