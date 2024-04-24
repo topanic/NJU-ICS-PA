@@ -106,7 +106,17 @@ static vaddr_t *csr_register(word_t imm) {
     }
 }
 
-#define ECALL(dnpc) { bool success; dnpc = (isa_raise_intr(isa_reg_str2val("a7", &success), s->pc)); }
+//
+// this part below is for TRAP and CSR.
+//
+static void etrace_info(Decode *s) {
+#ifdef CONFIG_ETRACE
+    bool success;
+    printf("\n" ANSI_FMT("[ETRACE]", ANSI_FG_YELLOW) " ecall at %#x, cause: %d", s->pc, isa_reg_str2val("a7", &success));
+#endif
+}
+
+#define ECALL(dnpc) { bool success; dnpc = (isa_raise_intr(isa_reg_str2val("a7", &success), s->pc)); etrace_info(s);}
 #define CSR(i) *csr_register(i)
 
 
