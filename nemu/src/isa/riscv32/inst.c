@@ -109,14 +109,16 @@ static vaddr_t *csr_register(word_t imm) {
 //
 // this part below is for TRAP and CSR.
 //
+
 static void etrace_info(Decode *s) {
 #ifdef CONFIG_ETRACE
     bool success;
-    printf("\n" ANSI_FMT("[ETRACE]", ANSI_FG_YELLOW) " ecall at %#x, cause: %d", s->pc, isa_reg_str2val("a7", &success));
+    printf("\n" ANSI_FMT("[ETRACE]", ANSI_FG_YELLOW) " ecall at %#x, cause: %d, a7: %d", s->pc, isa_reg_str2val("a7", &success), R(17));
+    assert(success == true);
 #endif
 }
 
-#define ECALL(dnpc) { bool success; dnpc = (isa_raise_intr(isa_reg_str2val("a7", &success), s->pc)); etrace_info(s);}
+#define ECALL(dnpc) {bool success; dnpc = (isa_raise_intr(isa_reg_str2val("a7", &success), s->pc)); assert(success == true);}
 #define CSR(i) *csr_register(i)
 
 
@@ -228,7 +230,7 @@ static int decode_exec(Decode *s) {
 
         /* N */
         INSTPAT("0000000 00001 00000 000 00000 11100 11", ebreak, N, NEMUTRAP(s->pc, R(10))); // R(10) is $a0
-        INSTPAT("0000000 00000 00000 000 00000 11100 11", ecall, N, ECALL(s->dnpc));
+        INSTPAT("0000000 00000 00000 000 00000 11100 11", ecall, N, etrace_info(s); ECALL(s->dnpc));
         INSTPAT("0011000 00010 00000 000 00000 11100 11", met, N, s->dnpc = cpu.csr.mepc);
         INSTPAT("??????? ????? ????? ??? ????? ????? ??", inv, N, INV(s->pc));
 
