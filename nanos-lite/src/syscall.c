@@ -1,9 +1,31 @@
 #include <common.h>
 #include "syscall.h"
 
+#define STD_IN 0
+#define STD_OUT 1
+#define STD_ERR 2
+
 enum Syscall_type {
     SYS_exit,
     SYS_yield,
+    SYS_open,
+    SYS_read,
+    SYS_write,
+    SYS_kill,
+    SYS_getpid,
+    SYS_close,
+    SYS_lseek,
+    SYS_brk,
+    SYS_fstat,
+    SYS_time,
+    SYS_signal,
+    SYS_execve,
+    SYS_fork,
+    SYS_link,
+    SYS_unlink,
+    SYS_wait,
+    SYS_times,
+    SYS_gettimeofday
 };
 
 static void strace(char syscall_name[], Context *c) {
@@ -14,6 +36,7 @@ static void strace(char syscall_name[], Context *c) {
 
 void sys_exit(Context *c);
 void sys_yield(Context *c);
+void sys_write(Context *c);
 
 void do_syscall(Context *c) {
     uintptr_t a[4];
@@ -29,6 +52,11 @@ void do_syscall(Context *c) {
             strace("SYS_yield", c);
             break;
 
+        case SYS_write:
+            sys_write(c);
+//            strace("SYS_write", c); // 加上这行会一个字符一个字符的打印，开启etrace也会
+            break;
+
         default:
             panic("Unhandled syscall ID = %d", a[0]);
     }
@@ -42,4 +70,15 @@ void sys_yield(Context *c) {
     yield();
     // set return value
     c->GPRx = 0;
+}
+
+void sys_write(Context *c) {
+    // int fd = (int)c->GPR2; // "fd" is used in "_write" function
+    const void *buf = (void*)c->GPR2;
+    size_t len = (size_t)c->GPR3;
+    for (int i = 0; i < len; i++) {
+        putch(*((char*)buf + i));
+    }
+    // set return value:
+    c->GPRx = len;
 }
