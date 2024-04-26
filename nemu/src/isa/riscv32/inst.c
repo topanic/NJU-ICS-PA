@@ -113,7 +113,7 @@ static vaddr_t *csr_register(word_t imm) {
 static void etrace_info(Decode *s) {
 #ifdef CONFIG_ETRACE
     bool success;
-    printf("\n" ANSI_FMT("[ETRACE]", ANSI_FG_YELLOW) " ecall at %#x, cause: %d", s->pc, isa_reg_str2val("a7", &success));
+    printf(ANSI_FMT("[ETRACE]", ANSI_FG_YELLOW) " ecall at %#x, cause: %d\n", s->pc, isa_reg_str2val("a7", &success));
     assert(success == true);
 #endif
 }
