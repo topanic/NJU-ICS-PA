@@ -19,8 +19,10 @@ word_t isa_raise_intr(word_t NO, vaddr_t epc) {
     /* TODO: Trigger an interrupt/exception with ``NO''.
      * Then return the address of the interrupt/exception vector.
      */
-    if (NO == 0) {
-        // "NO" equal 0, means trap
+    if (NO <= 19 || NO == -1) {
+        // means trap
+        // if interpret is "trap", pc need to add 4.
+        // if interpret is "fault", you don't need to add 4.
         epc += 4;
     }
     cpu.csr.mcause = NO;
