@@ -37,6 +37,7 @@ static void strace(char syscall_name[], Context *c) {
 void sys_exit(Context *c);
 void sys_yield(Context *c);
 void sys_write(Context *c);
+void sys_brk(Context *c);
 
 void do_syscall(Context *c) {
     uintptr_t a[4];
@@ -54,7 +55,11 @@ void do_syscall(Context *c) {
 
         case SYS_write:
             sys_write(c);
-//            strace("SYS_write", c); // 加上这行会一个字符一个字符的打印，开启etrace也会
+            strace("SYS_write", c);
+            break;
+        case SYS_brk:
+            sys_brk(c);
+            strace("SYS_brk", c);
             break;
 
         default:
@@ -81,4 +86,9 @@ void sys_write(Context *c) {
     }
     // set return value:
     c->GPRx = len;
+}
+
+void sys_brk(Context *c) {
+    // TODO: it will change in pa4
+    c->GPRx = 0;
 }
