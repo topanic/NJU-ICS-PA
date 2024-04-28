@@ -45,6 +45,15 @@ static Finfo file_table[] __attribute__((used)) = {
 #include "files.h"
 };
 
+#define FILE_TABLE_SIZE (sizeof(file_table) / sizeof(Finfo))
+
+char *get_file_name_by_fd(int fd) {
+    if (fd < FILE_TABLE_SIZE) {
+        return file_table[fd].name;
+    }
+    return NULL;
+}
+
 void init_fs() {
     // TODO: initialize the size of /dev/fb
 }

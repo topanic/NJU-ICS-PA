@@ -32,8 +32,13 @@
 
 static void strace(char syscall_name[], Context *c) {
     // "\33[1;36m" cyan fg
-    printf("\33[1;36m" "[STRACE]" "\33[0m" " %s | a1: %d, a2: %d, a3: %d, a4: %d | ret: %d\n",
+    printf("\33[1;46m" "[STRACE] " "\33[0m" " %s | a1: %d, a2: %d, a3: %d, a4: %d | ret: %d\n",
            syscall_name, c->GPR1, c->GPR2, c->GPR3, c->GPR4, c->GPRx);
+}
+
+static void fstrace(int fd) {
+    printf("\33[1;43m" "[FSTRACE]" "\33[0m" " fd: %d | filename: %s\n",
+           fd, get_file_name_by_fd(fd));
 }
 
 void sys_exit(Context *c);
@@ -51,39 +56,39 @@ void do_syscall(Context *c) {
 
     switch (a[0]) {
         case SYS_exit:
-            sys_exit(c);
             strace("SYS_exit", c);
+            sys_exit(c);
             break;
         case SYS_yield:
-            sys_yield(c);
             strace("SYS_yield", c);
+            sys_yield(c);
             break;
 
         case SYS_open:
-            sys_open(c);
             strace("SYS_open", c);
+            sys_open(c);
             break;
         case SYS_read:
-            sys_read(c);
             strace("SYS_read", c);
+            sys_read(c);
             break;
         case SYS_write:
-            sys_write(c);
             strace("SYS_write", c);
+            sys_write(c);
             break;
 
         case SYS_close:
-            sys_close(c);
             strace("SYS_close", c);
+            sys_close(c);
             break;
         case SYS_lseek:
-            sys_lseek(c);
             strace("SYS_lseek", c);
+            sys_lseek(c);
             break;
 
         case SYS_brk:
-            sys_brk(c);
             strace("SYS_brk", c);
+            sys_brk(c);
             break;
 
         default:
@@ -118,6 +123,7 @@ void sys_read(Context *c) {
     void *buf = (void *) c->GPR3;
     size_t len = (size_t) c->GPR4;
     c->GPRx = fs_read(fd, buf, len);
+    fstrace(fd);
 }
 
 //void sys_write(Context *c) {
@@ -136,11 +142,13 @@ void sys_write(Context *c) {
     const void *buf = (void *) c->GPR3;
     size_t len = (size_t) c->GPR4;
     c->GPRx = fs_write(fd, buf, len);
+    fstrace(fd);
 }
 
 void sys_close(Context *c) {
     int fd = (int) c->GPR2;
     c->GPRx = fs_close(fd);
+    fstrace(fd);
 }
 
 void sys_lseek(Context *c) {
@@ -148,6 +156,7 @@ void sys_lseek(Context *c) {
     size_t offset = (size_t) c->GPR3;
     int whence = (int) c->GPR4;
     c->GPRx = fs_lseek(fd, offset, whence);
+    fstrace(fd);
 }
 
 
