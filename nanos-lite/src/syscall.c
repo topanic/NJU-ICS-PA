@@ -1,4 +1,5 @@
 #include <common.h>
+#include <sys/time.h>
 #include "syscall.h"
 #include "fs.h"
 
@@ -49,6 +50,7 @@ void sys_open(Context *c);
 void sys_read(Context *c);
 void sys_close(Context *c);
 void sys_lseek(Context *c);
+void sys_gettimeofday(Context *c);
 
 void do_syscall(Context *c) {
     uintptr_t a[4];
@@ -89,6 +91,11 @@ void do_syscall(Context *c) {
         case SYS_brk:
             strace("SYS_brk", c);
             sys_brk(c);
+            break;
+
+        case SYS_gettimeofday:
+//            strace("SYS_gettimeofday", c);
+            sys_gettimeofday(c);
             break;
 
         default:
@@ -159,5 +166,11 @@ void sys_lseek(Context *c) {
     fstrace(fd);
 }
 
-
+void sys_gettimeofday(Context *c) {
+    struct timeval *tv = (struct timeval*)c->GPR2;
+    uint64_t t = io_read(AM_TIMER_UPTIME).us;
+    tv->tv_sec = t / 1000000;
+    tv->tv_usec = t % 1000000;
+    c->GPRx = 0;
+}
 
