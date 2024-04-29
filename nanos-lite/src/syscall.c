@@ -31,16 +31,23 @@
 //    SYS_gettimeofday
 //};
 
+//#define STRACE 1
+
 static void strace(char syscall_name[], Context *c) {
+#ifdef STRACE
     // "\33[1;36m" cyan fg
     printf("\33[1;46m" "[STRACE] " "\33[0m" " %s | a1: %d, a2: %d, a3: %d, a4: %d | ret: %d\n",
            syscall_name, c->GPR1, c->GPR2, c->GPR3, c->GPR4, c->GPRx);
+#endif
 }
 
 static void fstrace(int fd) {
+#ifdef STRACE
     printf("\33[1;43m" "[FSTRACE]" "\33[0m" " fd: %d | filename: %s\n",
            fd, get_file_name_by_fd(fd));
+#endif
 }
+
 
 void sys_exit(Context *c);
 void sys_yield(Context *c);
