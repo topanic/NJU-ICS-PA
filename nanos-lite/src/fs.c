@@ -40,7 +40,9 @@ static Finfo file_table[] __attribute__((used)) = {
         [FD_STDERR] = {"stderr", 0, 0, invalid_read, serial_write},
 
         /* device */
-        {"/dev/events", 0, 0, events_read, NULL}, //键盘，只支持读
+        {"/dev/events", 0, 0, events_read, NULL}, // keyboard, only read
+        {"/proc/dispinfo", 0, 0, dispinfo_read, NULL}, // display
+        {"/dev/fb", 0, 0, NULL, fb_write}, // frame buffer
 
 #include "files.h"
 };
@@ -56,6 +58,10 @@ char *get_file_name_by_fd(int fd) {
 
 void init_fs() {
     // TODO: initialize the size of /dev/fb
+    AM_GPU_CONFIG_T gpu_config = io_read(AM_GPU_CONFIG);
+    int gpu_fd = fs_open("/dev/fb", 0, 0);
+    file_table[gpu_fd].size = gpu_config.width * gpu_config.height * sizeof(uint32_t);
+    fs_close(gpu_fd);
 }
 
 
