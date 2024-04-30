@@ -23,6 +23,13 @@ static void sh_prompt() {
 }
 
 static void sh_handle_cmd(const char *cmd) {
+    // 注意回车符 "/bin/hello\n" 是终端输入内容，需要去除回车符，不然底层不匹配
+    char path[32];
+    memset(path, 0, 32);
+    for (int i = 0; cmd[i] != '\n'; i++) {
+        path[i] = cmd[i];
+    }
+    execve(path, 0, 0);
 }
 
 void builtin_sh_run() {

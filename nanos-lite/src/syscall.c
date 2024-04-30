@@ -1,5 +1,6 @@
 #include <common.h>
 #include <sys/time.h>
+#include <proc.h>
 #include "syscall.h"
 #include "fs.h"
 
@@ -58,6 +59,7 @@ void sys_read(Context *c);
 void sys_close(Context *c);
 void sys_lseek(Context *c);
 void sys_gettimeofday(Context *c);
+void sys_execve(Context *c);
 
 void do_syscall(Context *c) {
     uintptr_t a[4];
@@ -104,14 +106,21 @@ void do_syscall(Context *c) {
 //            strace("SYS_gettimeofday", c);
             sys_gettimeofday(c);
             break;
+        case SYS_execve:
+            sys_execve(c);
 
         default:
             panic("Unhandled syscall ID = %d", a[0]);
     }
 }
 
+extern void naive_uload(PCB *pcb, const char *filename);
+
 void sys_exit(Context *c) {
-    halt(c->GPRx);
+    // halt(c->GPR2);
+    naive_uload(NULL, "/bin/menu");
+    // 不应该运行到这里
+    halt(1);
 }
 
 void sys_yield(Context *c) {
@@ -179,5 +188,12 @@ void sys_gettimeofday(Context *c) {
     tv->tv_sec = t / 1000000;
     tv->tv_usec = t % 1000000;
     c->GPRx = 0;
+}
+
+void sys_execve(Context *c) {
+    const char *filename = (char *) c->GPR2;
+    naive_uload(NULL, filename);
+    // 不应该运行到这里
+    halt(1);
 }
 
